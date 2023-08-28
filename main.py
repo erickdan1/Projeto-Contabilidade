@@ -24,7 +24,7 @@ coluna9 = df['Valor (R$)']
 
 # Foco em Ano, UF, Coluna (Tipos de Despesas), Conta (Funções), Valor
 
-# Exemplo de operação: imprimir valores da coluna1 e coluna2 lado a lado
+# Exemplo de operação: imprimir valores da coluna1, coluna4, coluna6, coluna7 e coluna9 lado a lado
 for valor1, valor4, valor6, valor7, valor9 in zip(coluna1, coluna4, coluna6, coluna7, coluna9):
     print(f'{valor1} | {valor4} | {valor6}| {valor7}| {valor9}')
 
