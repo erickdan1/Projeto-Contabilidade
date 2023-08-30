@@ -1,64 +1,87 @@
 import tkinter as tk
 from tkinter import ttk
 import pandas as pd
+from tabulate import tabulate
 
 # Substitua 'nome-do-arquivo.xlsx' pelo nome do seu arquivo Excel
-nome_arquivo = 'FINBRA_Estados-DF_Despesas por Função_2018-2021.xlsx'
+nome_arquivo = 'FINBRA_Estados-DF_Despesas_por_Função_2018-2021.xlsx'
 
 # Carrega o arquivo Excel em um DataFrame do pandas
 df = pd.read_excel(nome_arquivo, skiprows=4)
 
+colunas_desejadas = ['Ano', 'UF', 'Coluna', 'Conta', 'Valor (R$)']
+
+df_selecionado = df[colunas_desejadas]
+
 # Exibe o conteúdo do DataFrame
 # print(df.head())
+# print(tabulate(df_selecionado, headers='keys', tablefmt='fancy_grid', showindex='always'))
 
 # Acessar colunas específicas e realizar operações
-coluna1 = df['Ano']
-coluna2 = df['Instituição']
-coluna3 = df['Cod.IBGE']
-coluna4 = df['UF']
-coluna5 = df['População']
-coluna6 = df['Coluna']
-coluna7 = df['Conta']
-coluna8 = df['Identificador da Conta']
-coluna9 = df['Valor (R$)']
+# ano = df['Ano']
+# coluna2 = df['Instituição']
+# coluna3 = df['Cod.IBGE']
+# uf = df['UF']
+# coluna5 = df['População']
+# tipos_desp = df['Coluna']
+# funcoes = df['Conta']
+# coluna8 = df['Identificador da Conta']
+# valor = df['Valor (R$)']
 
 # Foco em Ano, UF, Coluna (Tipos de Despesas), Conta (Funções), Valor
 
-# Exemplo de operação: imprimir valores da coluna1, coluna4, coluna6, coluna7 e coluna9 lado a lado
-for valor1, valor4, valor6, valor7, valor9 in zip(coluna1, coluna4, coluna6, coluna7, coluna9):
-    print(f'{valor1} | {valor4} | {valor6}| {valor7}| {valor9}')
+# Exemplo de operação: imprimir valores da ano, uf, tipos_desp, funcoes e valor lado a lado
+# for anos, estados, despesas, func, val in zip(ano, uf, tipos_desp, funcoes, valor):
+#     print(f'{anos} | {estados} | {despesas}| {func}| {val}')
 
-linhas_filtradas = df[df['Nome da Coluna'] == 'Valor de Referência']  # Filtrar linhas com base em uma condição
+# Assistência Social e suas subfuções
+# assist_soc = df[df['Conta'] == '08 - Assistência Social']  # Filtrar linhas com base em uma condição
+# assist_soc1 = df[df['Conta'] == '08.241 - Assistência ao Idoso']
+# assist_soc2 = df[df['Conta'] == '08.242 - Assistência ao Portador de Deficiência']
+# assist_soc3 = df[df['Conta'] == '08.243 - Assistência à Criança e ao Adolescente']
+# assist_soc4 = df[df['Conta'] == '08.244 - Assistência Comunitária']
+# assist_soc5 = df[df['Conta'] == '08.122 - Administração Geral']
 
-def filtrar_dados():
-    # Aqui você pode implementar a lógica de filtragem dos dados
-    # Os valores dos campos de filtro podem ser obtidos com as variáveis filtro1_var.get(), filtro2_var.get(), etc.
-    # Por enquanto, vamos apenas imprimir os valores para demonstração
-    print("Filtro 1:", filtro1_var.get())
-    print("Filtro 2:", filtro2_var.get())
+def populate_table():
+    global df_selecionado
 
-# Criar a janela principal
+    # Limpar a tabela existente
+    for item in tree.get_children():
+        tree.delete(item)
+
+    # Obter o valor do filtro do campo de entrada
+    filter_value = filter_entry.get()
+
+    # Filtrar os dados com base no valor inserido pelo usuário
+    filtered_df = df_selecionado[df_selecionado["Conta"].str.contains(filter_value, case=False)]
+
+    # Preencher a tabela com os dados filtrados
+    for index, row in filtered_df.iterrows():
+        tree.insert("", "end", values=row.tolist())
+
+
 root = tk.Tk()
-root.title("Filtragem de Dados")
+root.title("Tabela a partir de Banco de Dados do Excel")
 
-# Criar variáveis para armazenar os valores dos campos de filtro
-filtro1_var = tk.StringVar()
-filtro2_var = tk.StringVar()
+# Criar campo de entrada para filtro
+filter_label = tk.Label(root, text="Filtrar por valor:")
+filter_label.pack()
 
-# Criar rótulos e campos de entrada para os filtros
-filtro1_label = ttk.Label(root, text="Filtro 1:")
-filtro1_label.pack()
-filtro1_entry = ttk.Entry(root, textvariable=filtro1_var)
-filtro1_entry.pack()
+filter_entry = tk.Entry(root)
+filter_entry.pack()
 
-filtro2_label = ttk.Label(root, text="Filtro 2:")
-filtro2_label.pack()
-filtro2_entry = ttk.Entry(root, textvariable=filtro2_var)
-filtro2_entry.pack()
+# Criar a árvore (tabela)
+tree = ttk.Treeview(root, columns=("Ano", "UF", "Coluna", 'Conta', 'Valor (R$)'), show="headings")
+tree.heading("Ano", text="Ano")
+tree.heading("UF", text="UF")
+tree.heading("Coluna", text="Coluna")
+tree.heading("Conta", text="Conta")
+tree.heading("Valor (R$)", text="Valor (R$)")
+tree.pack()
 
-# Criar botão para aplicar o filtro
-filtrar_button = ttk.Button(root, text="Filtrar", command=filtrar_dados)
-filtrar_button.pack()
+# Botão para preencher a tabela a partir do Excel
+populate_button = tk.Button(root, text="Preencher Tabela", command=populate_table)
+populate_button.pack()
 
-# Iniciar o loop de eventos da interface gráfica
+# Iniciar o loop principal da interface
 root.mainloop()
