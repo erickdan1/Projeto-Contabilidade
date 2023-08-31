@@ -49,11 +49,27 @@ def populate_table():
     for item in tree.get_children():
         tree.delete(item)
 
-    # Obter o valor do filtro do campo de entrada
-    filter_value = filter_entry.get()
+    # Obter os valores dos filtros dos campos de entrada
+    selected_column = column_combobox.get()
+    selected_option = option_combobox.get()
 
-    # Filtrar os dados com base no valor inserido pelo usuário
-    filtered_df = df_selecionado[df_selecionado["Conta"].str.contains(filter_value, case=False)]
+    selected_column2 = column_combobox2.get()
+    selected_option2 = option_combobox2.get()
+
+    # Filtrar os dados com base nos valores inseridos pelo usuário
+    if selected_column != '' and selected_option != '' and selected_column2 != '' and selected_option2 != '':
+        filtered_df = df_selecionado[
+            (df_selecionado[selected_column].astype(str).str.contains(selected_option, case=False)) &
+            (df_selecionado[selected_column2].astype(str).str.contains(selected_option2, case=False))
+            ]
+    elif selected_column != '' and selected_option != '' and selected_column2 == '' and selected_option2 == '':
+        filtered_df = df_selecionado[df_selecionado[selected_column].astype(str).str.contains(selected_option, case=False)]
+
+    elif selected_column2 != '' and selected_option2 != '' and selected_column == '' and selected_option == '':
+        filtered_df = df_selecionado[df_selecionado[selected_column2].astype(str).str.contains(selected_option2, case=False)]
+
+    else:
+        filtered_df = df_selecionado
 
     # Preencher a tabela com os dados filtrados
     for index, row in filtered_df.iterrows():
@@ -63,12 +79,37 @@ def populate_table():
 root = tk.Tk()
 root.title("Tabela a partir de Banco de Dados do Excel")
 
-# Criar campo de entrada para filtro
-filter_label = tk.Label(root, text="Filtrar por valor:")
-filter_label.pack()
+# Criar campo de seleção para escolher a coluna
+column_label = tk.Label(root, text="Selecione uma coluna:")
+column_label.pack()
 
-filter_entry = tk.Entry(root)
-filter_entry.pack()
+column_combobox = ttk.Combobox(root, values=["Ano"])
+column_combobox.pack()
+
+# Criar campo de seleção para escolher uma opção
+option_label = tk.Label(root, text="Selecione outra coluna:")
+option_label.pack()
+
+option_combobox = ttk.Combobox(root, values=["2018", "2019", "2020", "2021"])
+option_combobox.pack()
+
+# ------------------------------------------------------------------
+
+# Criar campo de seleção para escolher a outra coluna
+column_label2 = tk.Label(root, text="Selecione o Estado:")
+column_label2.pack()
+
+column_combobox2 = ttk.Combobox(root, values=["UF"])
+column_combobox2.pack()
+
+# Criar campo de seleção para escolher uma opção
+option_label2 = tk.Label(root, text="Selecione uma opção:")
+option_label2.pack()
+
+option_combobox2 = ttk.Combobox(root, values=["AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS",
+                                              "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC",
+                                              "SE", "SP", "TO"])
+option_combobox2.pack()
 
 # Criar a árvore (tabela)
 tree = ttk.Treeview(root, columns=("Ano", "UF", "Coluna", 'Conta', 'Valor (R$)'), show="headings")
