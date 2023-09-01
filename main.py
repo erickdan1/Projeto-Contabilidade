@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 import pandas as pd
-from tabulate import tabulate
 
 # Substitua 'nome-do-arquivo.xlsx' pelo nome do seu arquivo Excel
 nome_arquivo = 'FINBRA_Estados-DF_Despesas_por_Função_2018-2021.xlsx'
@@ -11,11 +10,46 @@ df = pd.read_excel(nome_arquivo, skiprows=4)
 
 colunas_desejadas = ['Ano', 'UF', 'Coluna', 'Conta', 'Valor (R$)']
 
-df_selecionado = df[colunas_desejadas]
+df_col_selecionadas = df[colunas_desejadas]
+
+linhas_desejadas = ['08 - Assistência Social',
+                    '08.241 - Assistência ao Idoso',
+                    '08.242 - Assistência ao Portador de Deficiência',
+                    '08.243 - Assistência à Criança e ao Adolescente',
+                    '08.244 - Assistência Comunitária',
+                    '08.122 - Administração Geral',
+                    'FU08 - Demais Subfunções',
+                    '09 - Previdência Social',
+                    '09.271 - Previdência Básica',
+                    '09.272 - Previdência do Regime Estatutário',
+                    '09.273 - Previdência Complementar',
+                    '09.274 - Previdência Especial',
+                    '09.122 - Administração Geral',
+                    'FU09 - Demais Subfunções',
+                    '10 - Saúde',
+                    '10.301 - Atenção Básica',
+                    '10.302 - Assistência Hospitalar e Ambulatorial',
+                    '10.303 - Suporte Profilático e Terapêutico',
+                    '10.304 - Vigilância Sanitária',
+                    '10.305 - Vigilância Epidemiológica',
+                    '10.306 - Alimentação e Nutrição',
+                    '10.122 - Administração Geral',
+                    'FU10 - Demais Subfunções',
+                    '10.301 - Atenção Básica',
+                    '10.302 - Assistência Hospitalar e Ambulatorial',
+                    '10.303 - Suporte Profilático e Terapêutico',
+                    '10.304 - Vigilância Sanitária',
+                    '10.305 - Vigilância Epidemiológica',
+                    '10.306 - Alimentação e Nutrição',
+                    '10.122 - Administração Geral',
+                    'FU10 - Demais Subfunções']
+
+lin_col_selecionadas = df_col_selecionadas['Conta'].isin(linhas_desejadas)
+
+df_selecionado = df_col_selecionadas[lin_col_selecionadas]
 
 # Exibe o conteúdo do DataFrame
 # print(df.head())
-# print(tabulate(df_selecionado, headers='keys', tablefmt='fancy_grid', showindex='always'))
 
 # Acessar colunas específicas e realizar operações
 # ano = df['Ano']
@@ -87,7 +121,7 @@ column_combobox = ttk.Combobox(root, values=["Ano"])
 column_combobox.pack()
 
 # Criar campo de seleção para escolher uma opção
-option_label = tk.Label(root, text="Selecione outra coluna:")
+option_label = tk.Label(root, text="Selecione sua linha:")
 option_label.pack()
 
 option_combobox = ttk.Combobox(root, values=["2018", "2019", "2020", "2021"])
@@ -96,14 +130,14 @@ option_combobox.pack()
 # ------------------------------------------------------------------
 
 # Criar campo de seleção para escolher a outra coluna
-column_label2 = tk.Label(root, text="Selecione o Estado:")
+column_label2 = tk.Label(root, text="Selecione outra coluna:")
 column_label2.pack()
 
 column_combobox2 = ttk.Combobox(root, values=["UF"])
 column_combobox2.pack()
 
 # Criar campo de seleção para escolher uma opção
-option_label2 = tk.Label(root, text="Selecione uma opção:")
+option_label2 = tk.Label(root, text="Selecione sua linha:")
 option_label2.pack()
 
 option_combobox2 = ttk.Combobox(root, values=["AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS",
