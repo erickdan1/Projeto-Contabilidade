@@ -14,6 +14,8 @@ import locale
 
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
+center_lat, center_lon = -14.272572694355336, -51.25567404158474
+
 '''df = pd.read_excel('FINBRA_Estados-DF_Despesas_por_Função_2018-2021.xlsx', skiprows=4)
 
 colunas_desejadas = ['Ano', 'UF', 'Coluna', 'Conta', 'Valor (R$)']
@@ -68,10 +70,16 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG])
 
 estados_brasil = json.load(open("geojson/brazil_geo.json", "r"))
 
-fig = px.choropleth_mapbox(df_seguridade_social, locations="UF", color="Valor (R$)",
-                           center={"lat": -16.95, "lon": -47.78}, range_color=(0, 443900912), zoom=4,
-                           geojson=estados_brasil, color_continuous_scale="blues", opacity=0.6,
-                           hover_data={"UF": True})
+# Agrupe os dados por UF e calcule a soma de "Valor (R$)"
+df_agregado = df_seguridade_social.groupby("UF")["Valor (R$)"].sum().reset_index()
+
+# Crie o gráfico de calor com base nos dados agregados
+fig = px.choropleth_mapbox(df_agregado, locations="UF", color="Valor (R$)",
+                           center={"lat": center_lat, "lon": center_lon}, range_color=(0, df_agregado["Valor (R$)"].max()), zoom=4,
+                           geojson=estados_brasil, color_continuous_scale="blues", opacity=0.8,
+                           hover_data={"UF": True, "Valor (R$)": True})
+
+fig.update_geos(fitbounds="locations", visible=False)
 
 fig.update_layout(
     paper_bgcolor="#242424",
@@ -81,9 +89,25 @@ fig.update_layout(
     mapbox_style="carto-darkmatter"
 )
 
+cores_azuis = ['#1f77b4', '#3498db', '#6ba3e2', '#9ecae1', '#c6dbef']
 fig2 = go.Figure(layout={"template": "plotly_dark"})
-fig2.add_trace(go.Scatter(x=df_seguridade_social_RJ["Ano"], y=df_seguridade_social_RJ["Valor (R$)"]))
-fig2.update_layout(paper_bgcolor="#242424",
+fig2.add_trace(go.Pie(
+    labels=df_seguridade_social["Coluna"],
+    values=df_seguridade_social["Valor (R$)"],
+    marker=dict(colors=cores_azuis),
+    textinfo='percent+label',
+))
+
+fig2.update_layout(
+    paper_bgcolor="#242424",
+    plot_bgcolor="#242424",
+    autosize=True,
+    margin=dict(l=10, r=10, t=10, b=10),
+)
+
+fig3 = go.Figure(layout={"template": "plotly_dark"})
+fig3.add_trace(go.Bar(x=df_seguridade_social["Conta"], y=df_seguridade_social["Valor (R$)"]))
+fig3.update_layout(paper_bgcolor="#242424",
                    plot_bgcolor="#242424",
                    autosize=True,
                    margin=dict(l=10, r=10, t=10, b=10))
@@ -153,14 +177,32 @@ app.layout = dbc.Container(
                                                        "coloe": "#FFFFFF"})
             ], md=4)
         ]),
-            html.Div([
-            html.P("Selecione a subfunção na qual deseja obter informações:", style={"margin-top": "25px"}),
-            dcc.Dropdown(id="functions-dropdown",
-                         options=[{"label": "Assistência Social", "value": "Conta"},
-                                  {"label": "Previdência Social", "value": "Conta"},
-                                  {"label": "Saúde", "value": "Conta"}]),
-            dcc.Graph(id="linegraph", figure=fig2)
-            ])
+        dbc.Row([
+            dbc.Col([
+                html.Div([
+                html.P("Selecione a função na qual deseja obter informações a respeito de suas subfunções:", style={"margin-top": "25px"}),
+                dcc.Dropdown(id="functions-dropdown",
+                             options=[{"label": "Assistência Social", "value": "['08.241 - Assistência ao Idoso', "
+                                                                               "'08.242 - Assistência ao Portador de Deficiência',"
+                                                                               "'08.243 - Assistência à Criança e ao Adolescente',"
+                                                                               "'08.244 - Assistência Comunitária',"
+                                                                               "'08.122 - Administração Geral',"
+                                                                               "'FU08 - Demais Subfunções']"},
+                                      {"label": "Previdência Social", "value": ""},
+                                      {"label": "Saúde", "value": ""}]),
+
+                    dcc.Graph(id="bar-graph", figure=fig3)
+                ]),
+            ]),
+
+        ]),
+        dbc.Row([
+            dbc.Col([
+                html.P("Distribuição dos gastos por Tipos de Despesa e Inscrições de Restos a Pagar", style={"margin-top": "40px"}),
+                dcc.Graph(id="pie", figure=fig2)
+
+            ]),
+        ]),
 
         ], md=6, style={"padding": "25px", "background-color": "#242424"}),
 
@@ -189,14 +231,22 @@ app.layout = dbc.Container(
 
 def display_status(ano, location):
     if location == "BRASIL" and ano is None:
-        df_data_on_year = df_seguridade_social
+        df_data_on_year = df_seguridade_social[df_seguridade_social["Coluna"] == "Despesas Pagas"]
     elif location == "BRASIL" and ano is not None:
-        df_data_on_year = df_seguridade_social[df_seguridade_social["Ano"].astype(str).str.contains(ano, case=False)]
+        df_data_on_year = df_seguridade_social[df_seguridade_social["Ano"].astype(str).str.contains(ano, case=False) &
+                                               df_seguridade_social["Coluna"].astype(str).str.contains("Despesas Pagas", case=False)]
     else:
-        df_data_on_year = df_seguridade_social[
-            (df_seguridade_social["UF"].astype(str).str.contains(location, case=False)) &
-            (df_seguridade_social["Ano"].astype(str).str.contains(ano, case=False))
-            ]
+        if ano is not None:
+            df_data_on_year = df_seguridade_social[
+                (df_seguridade_social["UF"].astype(str).str.contains(location, case=False)) &
+                (df_seguridade_social["Ano"].astype(str).str.contains(ano, case=False)) |
+                (df_seguridade_social["Coluna"].astype(str).str.contains("Despesas Pagas", case=False))
+                ]
+        else:
+            df_data_on_year = df_seguridade_social[
+                (df_seguridade_social["UF"].astype(str).str.contains(location, case=False)) &
+                (df_seguridade_social["Coluna"].astype(str).str.contains("Despesas Pagas", case=False))
+                ]
 
     seguridade_social = df_data_on_year["Valor (R$)"].sum()
     seguridade_social_format = locale.currency(seguridade_social, grouping=True)
@@ -214,6 +264,98 @@ def display_status(ano, location):
     saude_format = locale.currency(saude, grouping=True)
 
     return seguridade_social_format, assistencia_social_format, previdencia_social_format, saude_format
+
+@app.callback(Output("bar-graph", "figure"), [
+
+    Input("functions-dropdown", "value"), Input("location-button", "children")
+])
+def plot_line_graph(value, location):
+    if location == "BRASIL" and value is None:
+        df_data_on_location = df_seguridade_social[df_seguridade_social["Coluna"].astype(str).str.contains("Despesas Pagas", case=False)]
+
+    elif location == "BRASIL" and value is not None:
+        df_data_on_location = df_seguridade_social_subfunc[
+            (df_seguridade_social_subfunc["Coluna"].astype(str).str.contains("Despesas Pagas", case=False)) &
+            (df_seguridade_social_subfunc["Conta"].astype(str).str.contains("08.242 - Assistência ao Portador de Deficiência", case=False)) |
+            (df_seguridade_social_subfunc["Conta"].astype(str).str.contains("08.243 - Assistência à Criança e ao Adolescente", case=False)) |
+            (df_seguridade_social_subfunc["Conta"].astype(str).str.contains("08.244 - Assistência Comunitária",case=False)) |
+            (df_seguridade_social_subfunc["Conta"].astype(str).str.contains("08.122 - Administração Geral", case=False)) |
+            (df_seguridade_social_subfunc["Conta"].astype(str).str.contains("FU08 - Demais Subfunções", case=False)) |
+            (df_seguridade_social_subfunc["Conta"].astype(str).str.contains("08.241 - Assistência ao Idoso", case=False))]
+
+    else:
+        if value is not None:
+            df_data_on_location = df_seguridade_social_subfunc[
+                (df_seguridade_social_subfunc["UF"].astype(str).str.contains(location, case=False)) &
+                (df_seguridade_social_subfunc["Conta"].astype(str).str.contains("08.241 - Assistência ao Idoso", case=False)) |
+                (df_seguridade_social_subfunc["Conta"].astype(str).str.contains("08.242 - Assistência ao Portador de Deficiência", case=False)) |
+                (df_seguridade_social_subfunc["Conta"].astype(str).str.contains("08.243 - Assistência à Criança e ao Adolescente", case=False)) |
+                (df_seguridade_social_subfunc["Conta"].astype(str).str.contains("08.244 - Assistência Comunitária", case=False)) |
+                (df_seguridade_social_subfunc["Conta"].astype(str).str.contains("08.122 - Administração Geral", case=False)) |
+                (df_seguridade_social_subfunc["Conta"].astype(str).str.contains("FU08 - Demais Subfunções", case=False)) |
+                (df_seguridade_social_subfunc["Coluna"].astype(str).str.contains("Despesas Pagas", case=False))
+                ]
+        else:
+            df_data_on_location = df_seguridade_social_subfunc[
+                (df_seguridade_social_subfunc["UF"].astype(str).str.contains(location, case=False)) &
+                (df_seguridade_social_subfunc["Coluna"].astype(str).str.contains("Despesas Pagas", case=False))
+                ]
+
+    fig3 = go.Figure(layout={"template": "plotly_dark"})
+    fig3.add_trace(go.Bar(x=df_data_on_location["Conta"], y=df_data_on_location["Valor (R$)"]))
+    fig3.update_layout(paper_bgcolor="#242424",
+                       plot_bgcolor="#242424",
+                       autosize=True,
+                       margin=dict(l=10, r=10, t=10, b=10))
+
+    return fig3
+
+@app.callback(
+    Output("choropleth-map", "figure"),
+    [Input("year-dropdown", "value")]
+)
+def update_map(value):
+    if value is not None:
+        df_data_on_states = df_seguridade_social[
+                (df_seguridade_social["UF"].astype(str).str.contains(value, case=False)) &
+                (df_seguridade_social["Coluna"].astype(str).str.contains("Despesas Pagas", case=False))
+                ]
+    else:
+        df_data_on_states = df_seguridade_social[df_seguridade_social["Coluna"].astype(str).str.contains("Despesas Pagas", case=False)]
+
+    # Agrupe os dados por UF e calcule a soma de "Valor (R$)"
+    df_agregado = df_data_on_states.groupby("UF")["Valor (R$)"].sum().reset_index()
+
+    # Crie o gráfico de calor com base nos dados agregados
+    fig = px.choropleth_mapbox(df_agregado, locations="UF", color="Valor (R$)",
+                               center={"lat": center_lat, "lon": center_lon},
+                               range_color=(0, df_agregado["Valor (R$)"].max()), zoom=4,
+                               geojson=estados_brasil, color_continuous_scale="blues", opacity=0.8,
+                               hover_data={"UF": True, "Valor (R$)": True})
+
+    fig.update_geos(fitbounds="locations", visible=False)
+
+    fig.update_layout(
+        paper_bgcolor="#242424",
+        autosize=True,
+        margin=go.layout.Margin(l=0, r=0, t=0, b=0),
+        showlegend=False,
+        mapbox_style="carto-darkmatter"
+    )
+
+    return fig
+
+@app.callback(
+    Output("location-button", "children"),
+    [Input("choropleth-map", "clickData"), Input("location-button", "n_clicks")]
+)
+def update_button(click_data, n_clicks):
+    changed_id = [p["prop_id"] for p in dash.callback_context.triggered][0]
+    if click_data is not None and changed_id != "location-button.n_clicks":
+        estado = click_data["points"][0]["location"]
+        return "{}".format(estado)
+    else:
+        return "BRASIL"
 
 if __name__ == "__main__":
     app.run_server(debug=True)
