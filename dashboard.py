@@ -24,6 +24,8 @@ df_seguridade_social_RJ = df_seguridade_social[df_seguridade_social["UF"] == "RJ
 # instanciando dashboard
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG])
 
+server = app.server
+
 estados_brasil = json.load(open("geojson/brazil_geo.json", "r"))
 
 df_agregado = df_seguridade_social.groupby("UF")["Valor (R$)"].sum().reset_index()
