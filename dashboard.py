@@ -11,7 +11,10 @@ import json
 
 import locale
 
-locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+def formatar_numero_monetario(numero):
+    numero_formatado = "{:,.2f}".format(numero)  # Formata o número com 2 casas decimais e vírgulas de milhar
+    return "R$ " + numero_formatado  # Adiciona o símbolo da moeda
+
 
 center_lat, center_lon = -14.272572694355336, -51.25567404158474
 
@@ -238,19 +241,19 @@ def display_status(ano, location):
                 ]
 
     seguridade_social = df_data_on_year["Valor (R$)"].sum()
-    seguridade_social_format = locale.currency(seguridade_social, grouping=True)
+    seguridade_social_format = formatar_numero_monetario(seguridade_social)
 
     df_assistencia_social = df_data_on_year[df_data_on_year["Conta"].astype(str).str.contains("08 - Assistência Social", case=False)]
     assistencia_social = df_assistencia_social['Valor (R$)'].sum()
-    assistencia_social_format = locale.currency(assistencia_social, grouping=True)
+    assistencia_social_format = formatar_numero_monetario(assistencia_social)
 
     df_previdencia_social = df_data_on_year[df_data_on_year["Conta"].astype(str).str.contains("09 - Previdência Social", case=False)]
     previdencia_social = df_previdencia_social['Valor (R$)'].sum()
-    previdencia_social_format = locale.currency(previdencia_social, grouping=True)
+    previdencia_social_format = formatar_numero_monetario(previdencia_social)
 
     df_saude = df_data_on_year[df_data_on_year["Conta"].astype(str).str.contains("10 - Saúde", case=False)]
     saude = df_saude['Valor (R$)'].sum()
-    saude_format = locale.currency(saude, grouping=True)
+    saude_format = formatar_numero_monetario(saude)
 
     return seguridade_social_format, assistencia_social_format, previdencia_social_format, saude_format
 
