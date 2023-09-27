@@ -26,10 +26,8 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG])
 
 estados_brasil = json.load(open("geojson/brazil_geo.json", "r"))
 
-# Agrupe os dados por UF e calcule a soma de "Valor (R$)"
 df_agregado = df_seguridade_social.groupby("UF")["Valor (R$)"].sum().reset_index()
 
-# Crie o gráfico de calor com base nos dados agregados
 fig = px.choropleth_mapbox(df_agregado, locations="UF", color="Valor (R$)",
                            center={"lat": center_lat, "lon": center_lon}, range_color=(0, df_agregado["Valor (R$)"].max()), zoom=4,
                            geojson=estados_brasil, color_continuous_scale="blues", opacity=0.8,
@@ -70,38 +68,34 @@ fig3.update_layout(paper_bgcolor="#242424",
                    autosize=True,
                    margin=dict(l=10, r=10, t=10, b=10))
 
-# Como fazer a sugestão do professor? --> Indicador de Execução (% de execução = Valor pago / Valor Empenhado * 100)
 df_agregado3 = df_seguridade_social.groupby("Coluna")["Valor (R$)"].sum().reset_index()
 vp = df_agregado3.loc[df_agregado3['Coluna'] == "Despesas Pagas", 'Valor (R$)'].values[0]
 ve = df_agregado3.loc[df_agregado3['Coluna'] == "Despesas Empenhadas", 'Valor (R$)'].values[0]
 
 indicador_execucao = (vp / ve) * 100
 
-# Crie uma figura de gráfico de medidor (gauge)
 fig4 = go.Figure()
 
-# Adicione um traço (trace) de medidor
 fig4.add_trace(go.Indicator(
-                            mode="gauge+number",  # Modo de exibição do medidor e número
+                            mode="gauge+number",
                             number={'suffix': "%", 'valueformat': ".1f", 'font': {'color': "white", 'size': 48}},
-                            value=indicador_execucao,  # Valor da indicador_execucao
-                            domain={'x': [0, 1], 'y': [0, 0.9]},  # Posição e tamanho do medidor
+                            value=indicador_execucao,
+                            domain={'x': [0, 1], 'y': [0, 0.9]},
                             gauge={
-                                'axis': {'visible': True, 'range': [None, 100]},  # Eixo do medidor invisível
-                                'bar': {'color': "royalblue"},  # Cor do medidor
+                                'axis': {'visible': True, 'range': [None, 100]},
+                                'bar': {'color': "royalblue"},
                                 'steps': [
-                                    {'range': [0, 50], 'color': "gray"},  # Faixa de valores do medidor
-                                    {'range': [50, 75], 'color': "darkgray"}  # Faixa de valores preenchida
+                                    {'range': [0, 50], 'color': "gray"},
+                                    {'range': [50, 75], 'color': "darkgray"}
                                 ],
                             }
                             )
                )
 
-# Atualize o layout do gráfico
 fig4.update_layout(paper_bgcolor="#242424",
                    plot_bgcolor="#242424",
                    autosize=True,
-                   height=450,  # Altura do gráfico
+                   height=450,
                    width=900,
                    )
 # ---------------------------------------------------
