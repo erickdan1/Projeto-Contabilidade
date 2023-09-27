@@ -11,7 +11,7 @@ import json
 
 import locale
 
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+locale.setlocale(locale.LC_ALL, 'C.UTF-8')
 
 center_lat, center_lon = -14.272572694355336, -51.25567404158474
 
