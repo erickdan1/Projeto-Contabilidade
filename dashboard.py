@@ -9,19 +9,18 @@ import plotly.graph_objects as go
 import pandas as pd
 import json
 
-import locale
-
 def formatar_numero_monetario(numero):
-    numero_formatado = "{:,.2f}".format(numero)  # Formata o número com 2 casas decimais e vírgulas de milhar
-    return "R$ " + numero_formatado  # Adiciona o símbolo da moeda
+    numero = "{:,.2f}".format(numero)  # Formata o número com 2 casas decimais e vírgulas de milhar
+    numero = numero.replace(",", "X")  # Substitui a vírgula temporariamente por um caractere diferente
+    numero = numero.replace(".", ",")   # Substitui o ponto por vírgula
+    numero = numero.replace("X", ".")  # Substitui o caractere temporário de volta por ponto
+    return "R$ " + numero
 
 
 center_lat, center_lon = -14.272572694355336, -51.25567404158474
 
 df_seguridade_social = pd.read_excel("df_seguridade_social.xlsx")
 df_seguridade_social_subfunc = pd.read_excel('df_seguridade_social_subfun.xlsx')
-
-df_seguridade_social_RJ = df_seguridade_social[df_seguridade_social["UF"] == "RJ"]
 
 # --------------------------------------------------
 # instanciando dashboard
@@ -100,21 +99,19 @@ fig4.add_trace(go.Indicator(
 fig4.update_layout(paper_bgcolor="#242424",
                    plot_bgcolor="#242424",
                    autosize=True,
-                   height=450,
-                   width=900,
                    )
 # ---------------------------------------------------
 # layout
 
-app.layout = dbc.Container(
+app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             html.Div([
                 html.Img(id="logo", src=app.get_asset_url("logo_cin_bw.png"), height=50),
                 html.H4("Análise de gastos com Seguridade Social no Brasil (2018-2021)"),
-                dbc.Button("BRASIL", color="primary", id="location-button", size="lg")
+                dbc.Button("BRASIL", color="primary", id="location-button", size="lg", style={'font-size': '20px'})
             ], style={}),
-            html.P("Informe o ano no qual deseja obter informações:", style={"margin-top": "40px"}),
+            html.P("Informe o ano no qual deseja obter informações:", style={"margin-top": "40px", 'fontSize': '18px'}),
             dcc.Dropdown(id="year-dropdown",
                          options=[{"label": "2018", "value": "2018"},
                                   {"label": "2019", "value": "2019"},
@@ -124,7 +121,7 @@ app.layout = dbc.Container(
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.Span("Seguridade Social"),
+                        html.Span("Seguridade Social", style={'fontSize': '24px'}),
                         html.H4(style={"color": "#FFD700"}, id="seguridade-social-text"),
 
                     ])
@@ -138,7 +135,7 @@ app.layout = dbc.Container(
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.Span("Assistência Social"),
+                        html.Span("Assistência Social", style={'fontSize': '24px'}),
                         html.H4(style={"color": "#00BFFF"}, id="assistencia-social-text"),
 
                     ])
@@ -149,7 +146,7 @@ app.layout = dbc.Container(
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.Span("Previdência Social"),
+                        html.Span("Previdência Social", style={'fontSize': '24px'}),
                         html.H4(style={"color": "#FFFFFF"}, id="previdencia-social-text"),
 
                     ])
@@ -160,7 +157,7 @@ app.layout = dbc.Container(
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.Span("Saúde"),
+                        html.Span("Saúde", style={'fontSize': '24px'}),
                         html.H4(style={"color": "#00FF7F"}, id="saude-text"),
 
                     ])
@@ -172,7 +169,7 @@ app.layout = dbc.Container(
         dbc.Row([
             dbc.Col([
                 html.Div([
-                html.P("Selecione a função na qual deseja obter informações a respeito de suas subfunções:", style={"margin-top": "25px"}),
+                html.P("Selecione a função na qual deseja obter informações a respeito de suas subfunções:", style={"margin-top": "25px", 'fontSize': '18px'}),
                 dcc.Dropdown(id="functions-dropdown",
                              options=[{"label": "Assistência Social", "value": "as"},
                                       {"label": "Previdência Social", "value": "ps"},
@@ -182,13 +179,6 @@ app.layout = dbc.Container(
                 ]),
             ]),
 
-        ]),
-        dbc.Row([
-            dbc.Col([
-                html.H6("Distribuição dos gastos por Tipos de Despesa e Inscrições de Restos a Pagar:", style={"margin-top": "40px"}),
-                dcc.Graph(id="pie-graph", figure=fig2)
-
-            ]),
         ]),
 
         ], md=6, style={"padding": "25px", "background-color": "#242424"}),
@@ -200,13 +190,30 @@ app.layout = dbc.Container(
                                 children=[dcc.Graph(id="choropleth-map", figure=fig, style={"height": "100vh", "margin-right": "10px"})]
                                 ),
                     ]),
+
+
+        ], md=6, style={"padding": "25px", "background-color": "#242424"}),
+
+    ]),
+
+    dbc.Row([
+        dbc.Col([
             dbc.Row([
-                    html.H6("Indicador de Execução (%) - Despesas Pagas / Despesas Empenhadas:", style={"margin-top": "75px"}),
+                html.P("Distribuição dos gastos por Tipos de Despesa e Inscrições de Restos a Pagar:", style={"margin-top": "25px", 'fontSize': '18px'}),
+                dcc.Graph(id="pie-graph", figure=fig2)
+
+            ]),
+        ], md=6, style={"padding": "25px", "background-color": "#242424"}),
+
+
+        dbc.Col([
+            dbc.Row([
+                    html.P("Indicador de Execução (%) - Despesas Pagas / Despesas Empenhadas:", style={"margin-top": "25px", 'fontSize': '18px'}),
                     dcc.Graph(id="indicator-graph", figure=fig4)
                     ]),
+        ], md=6, style={"padding": "25px", "background-color": "#242424"}),
 
-        ], md=6, style={"padding": "25px", "background-color": "#242424"})
-    ])
+    ])]
 
 
 , fluid=True)
@@ -225,17 +232,17 @@ def display_status(ano, location):
     if location == "BRASIL" and ano is None:
         df_data_on_year = df_seguridade_social[df_seguridade_social["Coluna"] == "Despesas Pagas"]
     elif location == "BRASIL" and ano is not None:
-        df_data_on_year = df_seguridade_social[df_seguridade_social["Ano"].astype(str).str.contains(ano, case=False) &
+        df_data_on_year = df_seguridade_social.loc[df_seguridade_social["Ano"].astype(str).str.contains(ano, case=False) &
                                                df_seguridade_social["Coluna"].astype(str).str.contains("Despesas Pagas", case=False)]
     else:
         if ano is not None:
-            df_data_on_year = df_seguridade_social[
+            df_data_on_year = df_seguridade_social.loc[
                 (df_seguridade_social["UF"].astype(str).str.contains(location, case=False)) &
-                (df_seguridade_social["Ano"].astype(str).str.contains(ano, case=False)) |
+                (df_seguridade_social["Ano"].astype(str).str.contains(ano, case=False)) &
                 (df_seguridade_social["Coluna"].astype(str).str.contains("Despesas Pagas", case=False))
                 ]
         else:
-            df_data_on_year = df_seguridade_social[
+            df_data_on_year = df_seguridade_social.loc[
                 (df_seguridade_social["UF"].astype(str).str.contains(location, case=False)) &
                 (df_seguridade_social["Coluna"].astype(str).str.contains("Despesas Pagas", case=False))
                 ]
@@ -268,7 +275,7 @@ def plot_bar_graph(funct, location, ano):
             if ano is None:
                 df_data_on_subfun = df_seguridade_social[df_seguridade_social["Coluna"].astype(str).str.contains("Despesas Pagas", case=False)]
             else:
-                df_data_on_subfun = df_seguridade_social[
+                df_data_on_subfun = df_seguridade_social.loc[
                     df_seguridade_social["Ano"].astype(str).str.contains(ano, case=False) &
                     df_seguridade_social["Coluna"].astype(str).str.contains("Despesas Pagas", case=False)]
         else:
@@ -349,14 +356,14 @@ def plot_bar_graph(funct, location, ano):
     else:
         if funct is None:
             if ano is None:
-                df_data_on_subfun = df_seguridade_social[
+                df_data_on_subfun = df_seguridade_social.loc[
                     (df_seguridade_social["UF"].astype(str).str.contains(location, case=False)) &
                     (df_seguridade_social["Coluna"].astype(str).str.contains("Despesas Pagas", case=False))
                     ]
             else:
-                df_data_on_subfun = df_seguridade_social[
+                df_data_on_subfun = df_seguridade_social.loc[
                     (df_seguridade_social["UF"].astype(str).str.contains(location, case=False)) &
-                    (df_seguridade_social["Ano"].astype(str).str.contains(ano, case=False)) |
+                    (df_seguridade_social["Ano"].astype(str).str.contains(ano, case=False)) &
                     (df_seguridade_social["Coluna"].astype(str).str.contains("Despesas Pagas", case=False))
                     ]
         else:
@@ -457,7 +464,7 @@ def plot_bar_graph(funct, location, ano):
 )
 def update_map(value):
     if value is not None:
-        df_data_on_states = df_seguridade_social[
+        df_data_on_states = df_seguridade_social.loc[
                 (df_seguridade_social["Ano"].astype(str).str.contains(value, case=False)) &
                 (df_seguridade_social["Coluna"].astype(str).str.contains("Despesas Pagas", case=False))
                 ]
@@ -510,7 +517,7 @@ def plot_pie_graph(value, location):
         df_data_on_desp = df_seguridade_social[(df_seguridade_social["Ano"].astype(str).str.contains(value, case=False))]
     else:
         if value is not None:
-            df_data_on_desp = df_seguridade_social[
+            df_data_on_desp = df_seguridade_social.loc[
                 (df_seguridade_social["Ano"].astype(str).str.contains(value, case=False)) &
                 (df_seguridade_social["UF"].astype(str).str.contains(location, case=False))]
         else:
@@ -547,7 +554,7 @@ def plot_indicator_graph(value, location):
             (df_seguridade_social["Ano"].astype(str).str.contains(value, case=False))]
     else:
         if value is not None:
-            df_data_on_desp_p_e = df_seguridade_social[
+            df_data_on_desp_p_e = df_seguridade_social.loc[
                 (df_seguridade_social["Ano"].astype(str).str.contains(value, case=False)) &
                 (df_seguridade_social["UF"].astype(str).str.contains(location, case=False))]
         else:
