@@ -24,7 +24,7 @@ df_seguridade_social_subfunc = pd.read_excel('df_seguridade_social_subfun.xlsx')
 
 # --------------------------------------------------
 # instanciando dashboard
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG], title='Análise de Seguridade Social')
 
 server = app.server
 
@@ -107,7 +107,7 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             html.Div([
-                html.Img(id="logo", src=app.get_asset_url("logo_cin_bw.png"), height=50),
+                html.Img(id="logo", src=app.get_asset_url("logo_cin_bw.png"), height=65),
                 html.H4("Análise de gastos com Seguridade Social no Brasil (2018-2021)"),
                 dbc.Button("BRASIL", color="primary", id="location-button", size="lg", style={'font-size': '20px'})
             ], style={}),
@@ -212,6 +212,19 @@ app.layout = dbc.Container([
                     dcc.Graph(id="indicator-graph", figure=fig4)
                     ]),
         ], md=6, style={"padding": "25px", "background-color": "#242424"}),
+
+    ]),
+
+    dbc.Row([
+        html.A("Centro de Informática (CIn)", href='https://portal.cin.ufpe.br/', target='_blank', style={'text-align': 'center', "margin-top": "20px", 'fontSize': '25px'}),
+        html.H6("Universidade Federal de Pernambuco - UFPE", style={'text-align': 'center'}),
+        html.P("Este projeto visa observar Despesas Empenhadas, Liquidadas, Pagas e Inscrição de Restos a Pagar Processados e Não Processados,", style={'text-align': 'center', 'fontSize': '18px', "margin-top": "5px"}),
+        html.P("com foco às funções da Seguridade Social, composta por: Assistência Social, Previdência Social e Saúde.", style={'text-align': 'center', 'fontSize': '18px'}),
+        html.H6("- Autores -", style={'text-align': 'center', "margin-top": "15px"}),
+        html.A('Erick Daniel', href='https://www.linkedin.com/in/erick-daniel-06561a215/', target='_blank', style={'text-align': 'center', 'fontSize': '18px'}),
+        html.A("Daniel Zamboni", href='dbzl@cin.ufpe.br', target='_blank', style={'text-align': 'center', 'fontSize': '18px'}),
+        html.A("Luis Filipe", href='https://www.linkedin.com/in/luisfilipepascoal/dbzl@cin.ufpe.br', target='_blank', style={'text-align': 'center', 'fontSize': '18px'}),
+        html.A("Melk Victor", href='mvfcs@cin.ufpe.br', target='_blank', style={'text-align': 'center', 'fontSize': '18px', 'margin-bottom': '20px'}),
 
     ])]
 
